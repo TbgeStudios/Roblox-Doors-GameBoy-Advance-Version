@@ -6,6 +6,10 @@
 #define MAP_WIDTH 8
 #define MAP_HEIGHT 8
 
+bool isCrouching = false;
+bool crouchPressedLastFrame = false;
+int crouchOffset = 0;
+
 int worldMap[MAP_HEIGHT][MAP_WIDTH] = {
     {1,1,1,1,1,1,1,1},
     {1,0,0,0,0,0,0,1},
@@ -42,8 +46,17 @@ int main(void) {
         VBlankIntrWait();
         scanKeys();
         u16 keys = keysHeld();
+        u16 pressedKeys = keysDown();
 
-        float moveSpeed = 0.28f;
+        // Toggle crouch on KEY_B press
+        if ((pressedKeys & KEY_B) && !crouchPressedLastFrame) {
+            isCrouching = !isCrouching;
+        }
+        crouchPressedLastFrame = (keys & KEY_B);
+
+        // Set crouch offset and movement speed
+    crouchOffset = isCrouching ? -(SCREEN_HEIGHT * 0.35f) : 0;
+        float moveSpeed = isCrouching ? 0.28f * 0.55f : 0.28f;
         float rotSpeed = 0.19f;
 
         // Movement
@@ -127,8 +140,8 @@ int main(void) {
                 : (mapY - posY + (1 - stepY) * 0.5f) / rayDirY;
 
             int lineHeight = (int)(SCREEN_HEIGHT / perpWallDist);
-            int drawStart = -lineHeight / 2 + SCREEN_HEIGHT / 2;
-            int drawEnd = lineHeight / 2 + SCREEN_HEIGHT / 2;
+            int drawStart = -lineHeight / 2 + SCREEN_HEIGHT / 2 + crouchOffset;
+            int drawEnd = lineHeight / 2 + SCREEN_HEIGHT / 2 + crouchOffset;
 
             if (drawStart < 0) drawStart = 0;
             if (drawEnd >= SCREEN_HEIGHT) drawEnd = SCREEN_HEIGHT - 1;
